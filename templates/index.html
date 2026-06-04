@@ -1,0 +1,1777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor ER · Innotech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #0a0e14;
+    --bg-1: #0f1419;
+    --bg-2: #161c24;
+    --bg-3: #1d242e;
+    --bg-4: #283342;
+    --border: #2a3441;
+    --border-strong: #3d4a5c;
+    --text-1: #e6edf3;
+    --text-2: #8b96a5;
+    --text-3: #5a6675;
+    --accent: #ffb454;
+    --catalogo: #59c2ff;
+    --mesa: #d2a6ff;
+    --django: #95e6cb;
+    --custom: #ff8f81;
+    --relation: #ffb454;
+    --relation-hi: #ff6b6b;
+    --pk: #ffb454;
+    --fk: #59c2ff;
+    --danger: #f85149;
+    --success: #56d364;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-0);
+    color: var(--text-1);
+    font-family: var(--font-display);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ TOOLBAR ============ */
+  .toolbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: rgba(15, 20, 25, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 10px;
+    z-index: 100;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+    margin-right: 6px;
+  }
+  .brand .dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 2px;
+    box-shadow: 0 0 12px var(--accent);
+  }
+
+  .toolbar-sep {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+  }
+
+  .btn {
+    height: 32px;
+    padding: 0 12px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--text-1);
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .15s ease;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--bg-3); border-color: var(--border-strong); }
+  .btn.primary { background: var(--accent); color: #0a0e14; border-color: var(--accent); }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.active { background: var(--accent); color: #0a0e14; border-color: var(--accent); }
+  .btn.icon-only { width: 32px; padding: 0; justify-content: center; }
+  .btn svg { width: 14px; height: 14px; }
+  .btn.sql-btn { background: rgba(149, 230, 203, 0.12); color: var(--django); border-color: var(--django); }
+  .btn.sql-btn:hover { background: rgba(149, 230, 203, 0.22); }
+
+  /* Diagram selector */
+  .diagram-selector {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .diagram-select {
+    height: 32px;
+    padding: 0 10px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--text-1);
+    font-family: var(--font-display);
+    font-size: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
+    max-width: 200px;
+  }
+  .diagram-select:focus { border-color: var(--accent); }
+
+  .zoom-controls {
+    display: flex;
+    align-items: center;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    height: 32px;
+    overflow: hidden;
+  }
+  .zoom-controls button {
+    background: transparent;
+    border: none;
+    width: 30px;
+    height: 30px;
+    color: var(--text-1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .zoom-controls button:hover { background: var(--bg-3); }
+  .zoom-level {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-2);
+    padding: 0 8px;
+    min-width: 48px;
+    text-align: center;
+  }
+
+  .spacer { flex: 1; }
+
+  .save-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-3);
+    opacity: 0;
+    transition: opacity .25s;
+  }
+  .save-indicator.visible { opacity: 1; }
+  .save-indicator .dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+  .save-indicator.saving .dot { background: var(--accent); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .search { position: relative; }
+  .search input {
+    height: 32px;
+    padding: 0 12px 0 32px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--text-1);
+    font-family: var(--font-display);
+    font-size: 12px;
+    border-radius: 6px;
+    width: 160px;
+    outline: none;
+  }
+  .search input:focus { border-color: var(--accent); }
+  .search svg { position: absolute; left: 10px; top: 9px; width: 14px; height: 14px; color: var(--text-3); }
+
+  /* ============ CANVAS ============ */
+  .canvas-wrap {
+    position: absolute;
+    top: 56px; left: 0; right: 0; bottom: 28px;
+    overflow: hidden;
+    cursor: grab;
+    background:
+      radial-gradient(circle at 25% 30%, rgba(89, 194, 255, 0.04), transparent 50%),
+      radial-gradient(circle at 75% 70%, rgba(210, 166, 255, 0.04), transparent 50%),
+      var(--bg-0);
+  }
+  .canvas-wrap.panning { cursor: grabbing; }
+
+  .grid-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 8000px;
+    height: 6000px;
+    transform-origin: 0 0;
+  }
+
+  .relations-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .relation-path {
+    fill: none;
+    stroke: var(--relation);
+    stroke-width: 1.5;
+    opacity: 0.35;
+    transition: opacity .2s, stroke .2s, stroke-width .2s;
+  }
+  .relation-path.dim { opacity: 0.06; }
+  .relation-path.highlight { stroke: var(--relation-hi); stroke-width: 2.5; opacity: 1; filter: drop-shadow(0 0 6px var(--relation-hi)); }
+
+  /* ============ TABLES ============ */
+  .table-card {
+    position: absolute;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    min-width: 240px;
+    max-width: 280px;
+    user-select: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transition: box-shadow .2s, border-color .2s, opacity .2s, min-width .2s, max-width .2s;
+    overflow: visible;
+  }
+  body.editing .table-card { min-width: 320px; max-width: 360px; }
+  .table-card:hover { border-color: var(--border-strong); box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  .table-card.highlighted { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(255, 180, 84, 0.25); }
+  .table-card.dim { opacity: 0.25; }
+  .table-card.dragging { box-shadow: 0 16px 48px rgba(0,0,0,0.6); z-index: 50; }
+
+  .table-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-2);
+    cursor: move;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 8px 8px 0 0;
+  }
+  .table-header .module-tag { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; cursor: pointer; position: relative; }
+  .table-card[data-module="catalogo"] .module-tag { background: var(--catalogo); box-shadow: 0 0 8px var(--catalogo); }
+  .table-card[data-module="mesa_ayuda"] .module-tag { background: var(--mesa); box-shadow: 0 0 8px var(--mesa); }
+  .table-card[data-module="django"] .module-tag { background: var(--django); box-shadow: 0 0 8px var(--django); }
+  .table-card[data-module="custom"] .module-tag { background: var(--custom); box-shadow: 0 0 8px var(--custom); }
+
+  .table-name {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-1);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+  body.editing .table-name { background: var(--bg-3); cursor: text; }
+  body.editing .table-name:focus { background: var(--bg-3); box-shadow: 0 0 0 1px var(--accent); }
+
+  .header-actions { display: flex; align-items: center; gap: 2px; }
+
+  .icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-3);
+    cursor: pointer;
+    padding: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .12s;
+  }
+  .icon-btn:hover { color: var(--text-1); background: var(--bg-3); }
+  .icon-btn.danger:hover { color: var(--danger); }
+  .icon-btn svg { width: 12px; height: 12px; }
+  .table-card.collapsed .table-collapse svg { transform: rotate(-90deg); }
+  .table-collapse svg { transition: transform .2s; }
+
+  .menu-wrap { position: relative; }
+  .menu-popup {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: var(--bg-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 4px;
+    min-width: 140px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    z-index: 60;
+    display: none;
+  }
+  .menu-popup.visible { display: block; }
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: var(--text-1);
+    cursor: pointer;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-display);
+  }
+  .menu-item:hover { background: var(--bg-3); }
+  .menu-item.danger { color: var(--danger); }
+  .menu-item.danger:hover { background: rgba(248, 81, 73, 0.1); }
+  .menu-item svg { width: 12px; height: 12px; flex-shrink: 0; }
+  .menu-divider { height: 1px; background: var(--border); margin: 4px 0; }
+  .menu-section { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 10px 2px; }
+
+  .module-picker {
+    position: absolute;
+    top: 18px;
+    left: -4px;
+    background: var(--bg-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 6px;
+    display: none;
+    gap: 4px;
+    z-index: 60;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .module-picker.visible { display: flex; }
+  .module-picker .opt { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 1.5px solid transparent; transition: all .12s; }
+  .module-picker .opt:hover { transform: scale(1.15); }
+  .module-picker .opt.selected { border-color: var(--text-1); }
+  .module-picker .opt[data-mod="catalogo"] { background: var(--catalogo); }
+  .module-picker .opt[data-mod="mesa_ayuda"] { background: var(--mesa); }
+  .module-picker .opt[data-mod="django"] { background: var(--django); }
+  .module-picker .opt[data-mod="custom"] { background: var(--custom); }
+
+  .columns { padding: 4px 0; max-height: 480px; overflow-y: auto; transition: max-height .25s, padding .25s; }
+  .table-card.collapsed .columns,
+  .table-card.collapsed .add-column-btn { max-height: 0; padding: 0; overflow: hidden; border: 0; }
+  .columns::-webkit-scrollbar { width: 4px; }
+  .columns::-webkit-scrollbar-track { background: transparent; }
+  .columns::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .column {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.4;
+    cursor: default;
+    position: relative;
+  }
+  .column:hover { background: var(--bg-2); }
+  body.editing .column { padding: 5px 8px; gap: 4px; }
+
+  .col-state { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+  body:not(.editing) .col-state { width: 16px; justify-content: center; }
+  body:not(.editing) .pk-btn,
+  body:not(.editing) .fk-select { display: none; }
+  body:not(.editing) .col-state::before { content: attr(data-icon); font-size: 9px; font-weight: 700; color: var(--text-3); }
+  .column.pk.has-icon .col-state::before { color: var(--pk); }
+  .column.fk.has-icon .col-state::before { color: var(--fk); }
+
+  .pk-btn {
+    background: var(--bg-3);
+    color: var(--text-3);
+    border: 1px solid var(--border);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    transition: all .12s;
+  }
+  .pk-btn.active { background: var(--pk); color: #0a0e14; border-color: var(--pk); }
+  .pk-btn:hover { border-color: var(--border-strong); }
+
+  .fk-select {
+    background: var(--bg-3);
+    color: var(--text-2);
+    border: 1px solid var(--border);
+    font-size: 9px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    max-width: 80px;
+    outline: none;
+  }
+  .fk-select.active { background: rgba(89, 194, 255, 0.15); color: var(--fk); border-color: var(--fk); }
+
+  .col-name {
+    flex: 1;
+    color: var(--text-1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 2px 0;
+    min-width: 0;
+  }
+  body.editing .col-name { background: var(--bg-2); padding: 2px 4px; border-radius: 3px; border: 1px solid transparent; }
+  body.editing .col-name:focus { border-color: var(--accent); }
+  .column.pk .col-name { color: var(--pk); font-weight: 500; }
+  .column.fk .col-name { color: var(--fk); }
+
+  .col-type {
+    color: var(--text-3);
+    font-size: 10px;
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: right;
+    width: 70px;
+    font-family: var(--font-mono);
+    padding: 2px 0;
+  }
+  body.editing .col-type { background: var(--bg-2); padding: 2px 4px; border-radius: 3px; border: 1px solid transparent; width: 80px; }
+  body.editing .col-type:focus { border-color: var(--accent); }
+
+  .col-delete {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--text-3);
+    cursor: pointer;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  body.editing .col-delete { display: flex; }
+  .col-delete:hover { background: rgba(248, 81, 73, 0.15); color: var(--danger); }
+
+  .add-column-btn {
+    display: none;
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-top: 1px dashed var(--border);
+    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 8px 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all .12s;
+  }
+  body.editing .add-column-btn { display: block; }
+  .add-column-btn:hover { color: var(--accent); background: var(--bg-2); }
+
+  /* ============ MINIMAP ============ */
+  .minimap {
+    position: fixed;
+    bottom: 40px;
+    right: 16px;
+    width: 200px;
+    height: 130px;
+    background: rgba(15, 20, 25, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    z-index: 50;
+  }
+  .minimap-content { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .minimap-dot { position: absolute; border-radius: 2px; }
+  .minimap-dot.catalogo { background: var(--catalogo); }
+  .minimap-dot.mesa_ayuda { background: var(--mesa); }
+  .minimap-dot.django { background: var(--django); }
+  .minimap-dot.custom { background: var(--custom); }
+  .minimap-viewport { position: absolute; border: 1.5px solid var(--accent); background: rgba(255, 180, 84, 0.1); pointer-events: none; }
+
+  /* ============ STATUS BAR ============ */
+  .statusbar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 28px;
+    background: var(--bg-1);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-2);
+    gap: 16px;
+    z-index: 99;
+  }
+  .statusbar .stat { display: flex; align-items: center; gap: 6px; }
+  .statusbar .stat strong { color: var(--text-1); font-weight: 500; }
+  .statusbar .legend { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-item .swatch { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ============ DETAILS PANEL ============ */
+  .details-panel {
+    position: fixed;
+    top: 72px;
+    right: 16px;
+    width: 280px;
+    background: rgba(15, 20, 25, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 12px;
+    z-index: 50;
+    display: none;
+  }
+  .details-panel.visible { display: block; }
+  .details-panel h3 { font-family: var(--font-mono); font-size: 13px; color: var(--text-1); margin-bottom: 12px; word-break: break-all; padding-right: 24px; }
+  .details-panel .meta { color: var(--text-2); margin-bottom: 8px; line-height: 1.6; }
+  .details-panel .relations-list { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .details-panel .relations-list h4 { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .details-panel .rel-item { font-family: var(--font-mono); font-size: 11px; color: var(--text-1); padding: 4px 0; cursor: pointer; }
+  .details-panel .rel-item:hover { color: var(--accent); }
+  .details-panel .close { position: absolute; top: 8px; right: 8px; background: transparent; border: none; color: var(--text-3); cursor: pointer; font-size: 16px; width: 24px; height: 24px; border-radius: 4px; }
+  .details-panel .close:hover { background: var(--bg-3); color: var(--text-1); }
+
+  /* ============ TOAST ============ */
+  .toast {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-2);
+    border: 1px solid var(--border-strong);
+    color: var(--text-1);
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    z-index: 200;
+    opacity: 0;
+    transition: all .25s ease;
+    pointer-events: none;
+    max-width: 400px;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ============ MODAL ============ */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-backdrop.visible { display: flex; }
+  .modal {
+    background: var(--bg-1);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 24px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  }
+  .modal h2 { font-size: 16px; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .modal p { color: var(--text-2); font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+  /* SQL modal */
+  .sql-modal {
+    max-width: 680px;
+    width: 90vw;
+  }
+  .sql-modal h2 { margin-bottom: 12px; }
+  .sql-output {
+    background: var(--bg-0);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--django);
+    white-space: pre;
+    overflow: auto;
+    max-height: 50vh;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  /* Empty state */
+  .empty-state {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--text-3);
+    pointer-events: none;
+  }
+  .empty-state h2 { font-size: 20px; color: var(--text-2); margin-bottom: 8px; }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="brand">
+    <span class="dot"></span>
+    Editor ER
+  </div>
+  <div class="toolbar-sep"></div>
+
+  <!-- Diagram selector -->
+  <div class="diagram-selector">
+    <select class="diagram-select" id="diagram-select" title="Cambiar diagrama"></select>
+    <button class="btn primary" id="btn-new-diagram" title="Nuevo diagrama">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
+      Nuevo
+    </button>
+    <button class="btn" id="btn-delete-diagram" title="Eliminar diagrama actual" style="color:var(--danger);border-color:var(--danger);">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h10M5.5 4V2.5h5V4M4 4l.7 9.5h6.6L12 4"/></svg>
+    </button>
+  </div>
+
+  <div class="toolbar-sep"></div>
+
+  <button class="btn primary" id="btn-add-table">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
+    Nueva tabla
+  </button>
+
+  <button class="btn" id="btn-edit">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 2l3 3-8 8H3v-3l8-8z"/></svg>
+    Editar
+  </button>
+
+  <div class="toolbar-sep"></div>
+
+  <button class="btn icon-only" id="btn-fit" title="Ajustar a la pantalla">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4"/></svg>
+  </button>
+
+  <button class="btn icon-only" id="btn-reset" title="Restablecer al esquema original">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8a5 5 0 1 1 1.5 3.5M3 8V4M3 8h4"/></svg>
+  </button>
+
+  <div class="toolbar-sep"></div>
+
+  <button class="btn sql-btn" id="btn-sql">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M5 7l2 2-2 2M9 11h2"/></svg>
+    Generar SQL
+  </button>
+
+  <button class="btn" id="btn-export">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2v9M4 7l4 4 4-4M2 14h12"/></svg>
+    Exportar
+  </button>
+
+  <button class="btn" id="btn-import">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 14V5M4 9l4-4 4 4M2 2h12"/></svg>
+    Importar
+  </button>
+
+  <input type="file" id="import-file" accept=".json,application/json" style="display:none">
+
+  <div class="toolbar-sep"></div>
+
+  <div class="zoom-controls">
+    <button id="zoom-out">−</button>
+    <span class="zoom-level" id="zoom-level">100%</span>
+    <button id="zoom-in">+</button>
+  </div>
+
+  <div class="spacer"></div>
+
+  <div class="save-indicator" id="save-indicator">
+    <span class="dot"></span>
+    <span id="save-text">Guardado</span>
+  </div>
+
+  <div class="search">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+    <input type="text" id="search" placeholder="Buscar…">
+  </div>
+</div>
+
+<!-- CANVAS -->
+<div class="canvas-wrap" id="canvas-wrap">
+  <div class="grid-bg"></div>
+  <div class="canvas" id="canvas">
+    <svg class="relations-svg" id="relations-svg"></svg>
+  </div>
+  <div class="empty-state" id="empty-state" style="display:none">
+    <h2>Sin diagrama</h2>
+    <p>Crea un nuevo diagrama con el botón "Nuevo"<br>o agrega una tabla con "Nueva tabla"</p>
+  </div>
+</div>
+
+<!-- DETAILS -->
+<div class="details-panel" id="details-panel">
+  <button class="close" id="details-close">×</button>
+  <h3 id="details-title"></h3>
+  <div class="meta" id="details-meta"></div>
+  <div class="relations-list">
+    <h4>Relaciones</h4>
+    <div id="details-relations"></div>
+  </div>
+</div>
+
+<!-- MINIMAP -->
+<div class="minimap" id="minimap">
+  <div class="minimap-content" id="minimap-content"></div>
+  <div class="minimap-viewport" id="minimap-viewport"></div>
+</div>
+
+<!-- STATUS -->
+<div class="statusbar">
+  <div class="stat"><strong id="stat-tables">0</strong> tablas</div>
+  <div class="stat"><strong id="stat-relations">0</strong> relaciones</div>
+  <div class="stat"><strong id="stat-columns">0</strong> columnas</div>
+  <div class="legend">
+    <div class="legend-item"><span class="swatch" style="background: var(--catalogo)"></span>catalogo</div>
+    <div class="legend-item"><span class="swatch" style="background: var(--mesa)"></span>mesa_ayuda</div>
+    <div class="legend-item"><span class="swatch" style="background: var(--django)"></span>django</div>
+    <div class="legend-item"><span class="swatch" style="background: var(--custom)"></span>custom</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Confirm modal -->
+<div class="modal-backdrop" id="confirm-modal">
+  <div class="modal">
+    <h2 id="confirm-title">¿Confirmar?</h2>
+    <p id="confirm-body"></p>
+    <div class="modal-actions">
+      <button class="btn" id="confirm-cancel">Cancelar</button>
+      <button class="btn" id="confirm-ok" style="background: var(--danger); color: white; border-color: var(--danger);">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SQL modal -->
+<div class="modal-backdrop" id="sql-modal">
+  <div class="modal sql-modal">
+    <h2>SQL generado · PostgreSQL</h2>
+    <pre class="sql-output" id="sql-output"></pre>
+    <div class="modal-actions">
+      <button class="btn" id="sql-copy">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="5" width="9" height="9" rx="1"/><path d="M4 11H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v1"/></svg>
+        Copiar
+      </button>
+      <button class="btn" id="sql-close">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- New diagram modal -->
+<div class="modal-backdrop" id="new-diagram-modal">
+  <div class="modal">
+    <h2>Nuevo diagrama</h2>
+    <p>Ingresa un nombre para identificar el diagrama.</p>
+    <input type="text" id="new-diagram-name"
+      placeholder="Ej: Sistema de Ventas"
+      style="width:100%;height:36px;padding:0 12px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-1);font-family:var(--font-display);font-size:13px;border-radius:6px;outline:none;margin-bottom:20px;">
+    <div class="modal-actions">
+      <button class="btn" id="new-diagram-cancel">Cancelar</button>
+      <button class="btn primary" id="new-diagram-ok">Crear</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="types-list">
+  <option value="uuid"></option>
+  <option value="bigint"></option>
+  <option value="integer"></option>
+  <option value="smallint"></option>
+  <option value="varchar(20)"></option>
+  <option value="varchar(50)"></option>
+  <option value="varchar(100)"></option>
+  <option value="varchar(200)"></option>
+  <option value="varchar(255)"></option>
+  <option value="text"></option>
+  <option value="boolean"></option>
+  <option value="timestamptz"></option>
+  <option value="date"></option>
+  <option value="numeric"></option>
+  <option value="jsonb"></option>
+</datalist>
+
+<script>
+/* ============================================================
+   ESQUEMA INICIAL
+   ============================================================ */
+const INITIAL_SCHEMA = {
+  tables: [
+    { id: 'catalogo_grupocatalogo', module: 'catalogo', x: 100, y: 80, columns: [
+      { name: 'id', type: 'bigint', pk: true },
+      { name: 'nombre', type: 'varchar(100)' }
+    ]},
+    { id: 'catalogo_catalogoitem', module: 'catalogo', x: 400, y: 80, columns: [
+      { name: 'id', type: 'uuid', pk: true },
+      { name: 'codigo', type: 'varchar(20)' },
+      { name: 'nombre', type: 'varchar(100)' },
+      { name: 'grupo_id', type: 'bigint', fk: 'catalogo_grupocatalogo' }
+    ]},
+    { id: 'catalogo_estado', module: 'catalogo', x: 100, y: 280, columns: [
+      { name: 'id', type: 'uuid', pk: true },
+      { name: 'codigo', type: 'varchar(20)' },
+      { name: 'nombre', type: 'varchar(100)' },
+      { name: 'descripcion', type: 'varchar(200)' },
+      { name: 'color_hexa', type: 'varchar(20)' }
+    ]},
+    { id: 'mesa_ayuda_workitem', module: 'mesa_ayuda', x: 700, y: 280, columns: [
+      { name: 'id', type: 'uuid', pk: true },
+      { name: 'resumen', type: 'varchar(255)' },
+      { name: 'estado_id', type: 'uuid', fk: 'catalogo_estado' },
+      { name: 'categoria_id', type: 'uuid', fk: 'catalogo_catalogoitem' }
+    ]}
+  ]
+};
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+let SCHEMA = { tables: [] };
+let currentDiagramId = null;
+let diagramList = [];
+
+const state = {
+  zoom: 0.75,
+  panX: 0,
+  panY: 0,
+  editMode: false,
+  selectedTable: null,
+};
+
+function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+/* ============================================================
+   API
+   ============================================================ */
+async function apiFetch(url, options = {}) {
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    ...options,
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
+}
+
+function getCookie(name) {
+  const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+  return v ? v[2] : '';
+}
+
+async function loadDiagramList() {
+  diagramList = await apiFetch('/api/diagrams/');
+  const sel = document.getElementById('diagram-select');
+  sel.innerHTML = diagramList.length === 0
+    ? '<option value="">— sin diagramas —</option>'
+    : diagramList.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('');
+  return diagramList;
+}
+
+async function loadDiagram(id) {
+  const data = await apiFetch(`/api/diagrams/${id}/`);
+  currentDiagramId = data.id;
+  SCHEMA = data.schema && Array.isArray(data.schema.tables) ? data.schema : deepClone(INITIAL_SCHEMA);
+  document.getElementById('diagram-select').value = id;
+  renderAll();
+  requestAnimationFrame(() => requestAnimationFrame(fitToView));
+  toast(`Diagrama "${data.name}" cargado · ${SCHEMA.tables.length} tablas`);
+}
+
+let saveTimer = null;
+function saveSchema() {
+  if (!currentDiagramId) return;
+  const indicator = document.getElementById('save-indicator');
+  indicator.classList.add('visible', 'saving');
+  document.getElementById('save-text').textContent = 'Guardando…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await apiFetch(`/api/diagrams/${currentDiagramId}/`, {
+        method: 'PUT',
+        body: JSON.stringify({ schema: SCHEMA }),
+      });
+      indicator.classList.remove('saving');
+      document.getElementById('save-text').textContent = 'Guardado';
+      setTimeout(() => indicator.classList.remove('visible'), 1500);
+    } catch (e) {
+      indicator.classList.remove('saving');
+      document.getElementById('save-text').textContent = 'Error al guardar';
+    }
+  }, 500);
+}
+
+/* ============================================================
+   CANVAS
+   ============================================================ */
+const canvasWrap = document.getElementById('canvas-wrap');
+const canvas = document.getElementById('canvas');
+const svg = document.getElementById('relations-svg');
+
+function buildRelations() {
+  const relations = [];
+  SCHEMA.tables.forEach(t => {
+    t.columns.forEach(col => {
+      if (col.fk) relations.push({ from: t.id, fromCol: col.name, to: col.fk });
+    });
+  });
+  return relations;
+}
+
+function renderAll() {
+  document.querySelectorAll('.table-card').forEach(el => el.remove());
+  SCHEMA.tables.forEach(renderTable);
+  updateRelations();
+  updateStats();
+  updateMinimap();
+  const empty = document.getElementById('empty-state');
+  empty.style.display = (SCHEMA.tables.length === 0 && !currentDiagramId) ? 'block' : 'none';
+}
+
+function renderTable(t) {
+  const card = document.createElement('div');
+  card.className = 'table-card';
+  card.dataset.id = t.id;
+  card.dataset.module = t.module;
+  card.style.left = t.x + 'px';
+  card.style.top = t.y + 'px';
+
+  const header = document.createElement('div');
+  header.className = 'table-header';
+  header.innerHTML = `
+    <span class="module-tag" title="Cambiar módulo">
+      <div class="module-picker">
+        <div class="opt" data-mod="catalogo" title="catalogo"></div>
+        <div class="opt" data-mod="mesa_ayuda" title="mesa_ayuda"></div>
+        <div class="opt" data-mod="django" title="django"></div>
+        <div class="opt" data-mod="custom" title="custom"></div>
+      </div>
+    </span>
+    <input class="table-name" value="${escapeHtml(t.id)}" spellcheck="false">
+    <div class="header-actions">
+      <button class="icon-btn table-collapse" title="Plegar/desplegar">
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5l3 3 3-3"/></svg>
+      </button>
+      <div class="menu-wrap">
+        <button class="icon-btn table-menu-btn" title="Más opciones">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="2.5" cy="6" r="0.8" fill="currentColor"/><circle cx="6" cy="6" r="0.8" fill="currentColor"/><circle cx="9.5" cy="6" r="0.8" fill="currentColor"/></svg>
+        </button>
+        <div class="menu-popup">
+          <button class="menu-item" data-action="duplicate">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="3.5" width="6" height="7" rx="1"/><rect x="4.5" y="1.5" width="6" height="7" rx="1"/></svg>
+            Duplicar
+          </button>
+          <button class="menu-item" data-action="add-column">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2v8M2 6h8"/></svg>
+            Agregar columna
+          </button>
+          <div class="menu-divider"></div>
+          <div class="menu-section">Módulo</div>
+          <button class="menu-item" data-action="module" data-value="catalogo"><span style="width:8px;height:8px;border-radius:50%;background:var(--catalogo);display:inline-block"></span>catalogo</button>
+          <button class="menu-item" data-action="module" data-value="mesa_ayuda"><span style="width:8px;height:8px;border-radius:50%;background:var(--mesa);display:inline-block"></span>mesa_ayuda</button>
+          <button class="menu-item" data-action="module" data-value="django"><span style="width:8px;height:8px;border-radius:50%;background:var(--django);display:inline-block"></span>django</button>
+          <button class="menu-item" data-action="module" data-value="custom"><span style="width:8px;height:8px;border-radius:50%;background:var(--custom);display:inline-block"></span>custom</button>
+          <div class="menu-divider"></div>
+          <button class="menu-item danger" data-action="delete">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h8M4.5 3V1.5h3V3M3 3l.5 7.5h5L9 3"/></svg>
+            Eliminar tabla
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  card.appendChild(header);
+
+  const cols = document.createElement('div');
+  cols.className = 'columns';
+  t.columns.forEach((col, idx) => cols.appendChild(renderColumn(t, col, idx)));
+  card.appendChild(cols);
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-column-btn';
+  addBtn.textContent = '+ columna';
+  addBtn.addEventListener('click', (e) => { e.stopPropagation(); addColumn(t.id); });
+  card.appendChild(addBtn);
+
+  const nameInput = header.querySelector('.table-name');
+  nameInput.addEventListener('mousedown', (e) => e.stopPropagation());
+  nameInput.addEventListener('change', () => {
+    const newName = nameInput.value.trim();
+    if (!newName) { nameInput.value = t.id; return; }
+    if (newName !== t.id && SCHEMA.tables.some(x => x.id === newName)) {
+      toast('Ya existe una tabla con ese nombre');
+      nameInput.value = t.id;
+      return;
+    }
+    renameTable(t.id, newName);
+  });
+
+  header.querySelector('.table-collapse').addEventListener('click', (e) => {
+    e.stopPropagation();
+    card.classList.toggle('collapsed');
+    setTimeout(updateRelations, 260);
+  });
+
+  const menuBtn = header.querySelector('.table-menu-btn');
+  const menuPopup = header.querySelector('.menu-popup');
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.menu-popup.visible').forEach(p => { if (p !== menuPopup) p.classList.remove('visible'); });
+    menuPopup.classList.toggle('visible');
+  });
+  menuPopup.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menuPopup.classList.remove('visible');
+      handleMenuAction(t.id, item.dataset.action, item.dataset.value);
+    });
+  });
+
+  const modTag = header.querySelector('.module-tag');
+  const modPicker = header.querySelector('.module-picker');
+  modTag.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!state.editMode) return;
+    document.querySelectorAll('.module-picker.visible').forEach(p => { if (p !== modPicker) p.classList.remove('visible'); });
+    modPicker.classList.toggle('visible');
+  });
+  modPicker.querySelectorAll('.opt').forEach(opt => {
+    if (opt.dataset.mod === t.module) opt.classList.add('selected');
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      changeModule(t.id, opt.dataset.mod);
+      modPicker.classList.remove('visible');
+    });
+  });
+
+  card.addEventListener('click', (e) => {
+    if (state.editMode) return;
+    if (e.target.closest('.menu-popup') || e.target.closest('.module-picker')) return;
+    if (e.target.closest('input') || e.target.closest('button') || e.target.closest('select')) return;
+    showDetails(t.id);
+  });
+
+  card.addEventListener('mouseenter', () => { if (!state.editMode) highlightTable(t.id); });
+  card.addEventListener('mouseleave', () => { if (!state.editMode) clearHighlight(); });
+
+  makeDraggable(card, header);
+  canvas.appendChild(card);
+}
+
+function renderColumn(t, col, idx) {
+  const c = document.createElement('div');
+  c.className = 'column has-icon';
+  if (col.pk) c.classList.add('pk');
+  if (col.fk) c.classList.add('fk');
+  c.dataset.col = col.name;
+
+  const stateBox = document.createElement('div');
+  stateBox.className = 'col-state';
+  stateBox.dataset.icon = col.pk ? 'PK' : (col.fk ? 'FK' : '·');
+
+  const pkBtn = document.createElement('button');
+  pkBtn.className = 'pk-btn' + (col.pk ? ' active' : '');
+  pkBtn.textContent = 'PK';
+  pkBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePK(t.id, idx); });
+  stateBox.appendChild(pkBtn);
+
+  const fkSel = document.createElement('select');
+  fkSel.className = 'fk-select' + (col.fk ? ' active' : '');
+  const blank = document.createElement('option');
+  blank.value = ''; blank.textContent = 'FK→';
+  fkSel.appendChild(blank);
+  SCHEMA.tables.forEach(ot => {
+    const opt = document.createElement('option');
+    opt.value = ot.id; opt.textContent = ot.id;
+    if (col.fk === ot.id) opt.selected = true;
+    fkSel.appendChild(opt);
+  });
+  fkSel.addEventListener('change', (e) => { e.stopPropagation(); setFK(t.id, idx, fkSel.value || null); });
+  fkSel.addEventListener('mousedown', (e) => e.stopPropagation());
+  stateBox.appendChild(fkSel);
+  c.appendChild(stateBox);
+
+  const nameInput = document.createElement('input');
+  nameInput.className = 'col-name';
+  nameInput.value = col.name;
+  nameInput.spellcheck = false;
+  nameInput.addEventListener('mousedown', (e) => e.stopPropagation());
+  nameInput.addEventListener('change', () => {
+    const newName = nameInput.value.trim();
+    if (!newName) { nameInput.value = col.name; return; }
+    if (newName !== col.name && t.columns.some(cc => cc !== col && cc.name === newName)) {
+      toast('Ya existe una columna con ese nombre');
+      nameInput.value = col.name;
+      return;
+    }
+    renameColumn(t.id, idx, newName);
+  });
+  c.appendChild(nameInput);
+
+  const typeInput = document.createElement('input');
+  typeInput.className = 'col-type';
+  typeInput.value = col.type;
+  typeInput.setAttribute('list', 'types-list');
+  typeInput.spellcheck = false;
+  typeInput.addEventListener('mousedown', (e) => e.stopPropagation());
+  typeInput.addEventListener('change', () => {
+    col.type = typeInput.value.trim() || 'varchar(100)';
+    typeInput.value = col.type;
+    saveSchema();
+  });
+  c.appendChild(typeInput);
+
+  const del = document.createElement('button');
+  del.className = 'col-delete';
+  del.innerHTML = '×';
+  del.addEventListener('click', (e) => { e.stopPropagation(); deleteColumn(t.id, idx); });
+  c.appendChild(del);
+
+  return c;
+}
+
+/* ============================================================
+   OPERACIONES
+   ============================================================ */
+function generateTableId(base = 'nueva_tabla') {
+  let i = 1;
+  while (SCHEMA.tables.some(t => t.id === `${base}_${i}`)) i++;
+  return `${base}_${i}`;
+}
+
+function addTable() {
+  if (!currentDiagramId) { toast('Crea o selecciona un diagrama primero'); return; }
+  const wrapW = canvasWrap.clientWidth;
+  const wrapH = canvasWrap.clientHeight;
+  const cx = (-state.panX + wrapW / 2) / state.zoom - 140;
+  const cy = (-state.panY + wrapH / 2) / state.zoom - 60;
+  const newId = generateTableId();
+  const newTable = { id: newId, module: 'custom', x: Math.max(20, cx), y: Math.max(20, cy), columns: [{ name: 'id', type: 'uuid', pk: true }] };
+  SCHEMA.tables.push(newTable);
+  renderTable(newTable);
+  updateRelations(); updateStats(); updateMinimap();
+  saveSchema();
+  toast(`Tabla "${newId}" creada`);
+  setTimeout(() => {
+    const newCard = document.querySelector(`.table-card[data-id="${newId}"]`);
+    if (newCard) {
+      newCard.classList.add('highlighted');
+      setTimeout(() => newCard.classList.remove('highlighted'), 1500);
+      if (state.editMode) { const inp = newCard.querySelector('.table-name'); inp.focus(); inp.select(); }
+    }
+  }, 50);
+}
+
+function duplicateTable(id) {
+  const t = SCHEMA.tables.find(x => x.id === id);
+  if (!t) return;
+  const copy = deepClone(t);
+  copy.id = generateTableId(t.id);
+  copy.x = t.x + 40; copy.y = t.y + 40;
+  SCHEMA.tables.push(copy);
+  renderTable(copy);
+  updateRelations(); updateStats(); updateMinimap();
+  saveSchema();
+  toast(`Tabla duplicada como "${copy.id}"`);
+}
+
+function deleteTable(id) {
+  let refs = 0;
+  SCHEMA.tables.forEach(t => t.columns.forEach(c => { if (c.fk === id) refs++; }));
+  const msg = refs > 0 ? `Esta tabla es referenciada por ${refs} columna(s) FK. Esas referencias se eliminarán.` : 'Esta acción no se puede deshacer.';
+  showConfirm(`Eliminar "${id}"`, msg, () => {
+    SCHEMA.tables.forEach(t => t.columns.forEach(c => { if (c.fk === id) delete c.fk; }));
+    SCHEMA.tables = SCHEMA.tables.filter(t => t.id !== id);
+    renderAll(); saveSchema();
+    toast(`Tabla "${id}" eliminada`);
+  });
+}
+
+function renameTable(oldId, newId) {
+  const t = SCHEMA.tables.find(x => x.id === oldId);
+  if (!t) return;
+  t.id = newId;
+  SCHEMA.tables.forEach(tt => tt.columns.forEach(c => { if (c.fk === oldId) c.fk = newId; }));
+  renderAll(); saveSchema();
+}
+
+function changeModule(id, module) {
+  const t = SCHEMA.tables.find(x => x.id === id);
+  if (!t) return;
+  t.module = module;
+  const card = document.querySelector(`.table-card[data-id="${id}"]`);
+  if (card) {
+    card.dataset.module = module;
+    card.querySelectorAll('.module-picker .opt').forEach(o => o.classList.toggle('selected', o.dataset.mod === module));
+  }
+  saveSchema(); updateMinimap();
+}
+
+function addColumn(tableId) {
+  const t = SCHEMA.tables.find(x => x.id === tableId);
+  if (!t) return;
+  let i = 1, name = 'nuevo_campo';
+  while (t.columns.some(c => c.name === name)) name = `nuevo_campo_${i++}`;
+  t.columns.push({ name, type: 'varchar(100)' });
+  renderAll(); saveSchema();
+  setTimeout(() => {
+    const card = document.querySelector(`.table-card[data-id="${tableId}"]`);
+    if (card) {
+      const inputs = card.querySelectorAll('.col-name');
+      const last = inputs[inputs.length - 1];
+      if (last && state.editMode) { last.focus(); last.select(); }
+      card.querySelector('.columns').scrollTop = 9999;
+    }
+  }, 50);
+}
+
+function deleteColumn(tableId, idx) {
+  const t = SCHEMA.tables.find(x => x.id === tableId);
+  if (!t || !t.columns[idx]) return;
+  if (t.columns.length === 1) { toast('Una tabla debe tener al menos una columna'); return; }
+  t.columns.splice(idx, 1);
+  renderAll(); saveSchema();
+}
+
+function renameColumn(tableId, idx, newName) {
+  const t = SCHEMA.tables.find(x => x.id === tableId);
+  if (!t || !t.columns[idx]) return;
+  t.columns[idx].name = newName;
+  saveSchema();
+}
+
+function togglePK(tableId, idx) {
+  const t = SCHEMA.tables.find(x => x.id === tableId);
+  if (!t || !t.columns[idx]) return;
+  const col = t.columns[idx];
+  col.pk = !col.pk;
+  if (!col.pk) delete col.pk;
+  const card = document.querySelector(`.table-card[data-id="${tableId}"]`);
+  if (card) { const oldCol = card.querySelectorAll('.column')[idx]; if (oldCol) oldCol.replaceWith(renderColumn(t, col, idx)); }
+  saveSchema();
+}
+
+function setFK(tableId, idx, target) {
+  const t = SCHEMA.tables.find(x => x.id === tableId);
+  if (!t || !t.columns[idx]) return;
+  const col = t.columns[idx];
+  if (target) col.fk = target; else delete col.fk;
+  const card = document.querySelector(`.table-card[data-id="${tableId}"]`);
+  if (card) { const oldCol = card.querySelectorAll('.column')[idx]; if (oldCol) oldCol.replaceWith(renderColumn(t, col, idx)); }
+  updateRelations(); updateStats(); saveSchema();
+}
+
+function handleMenuAction(tableId, action, value) {
+  switch (action) {
+    case 'duplicate': duplicateTable(tableId); break;
+    case 'add-column': addColumn(tableId); break;
+    case 'module': changeModule(tableId, value); break;
+    case 'delete': deleteTable(tableId); break;
+  }
+}
+
+/* ============================================================
+   DRAG / PAN / ZOOM
+   ============================================================ */
+function makeDraggable(card, handle) {
+  let dragging = false, startX, startY, origX, origY;
+  handle.addEventListener('mousedown', (e) => {
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select')) return;
+    if (e.target.closest('.menu-popup') || e.target.closest('.module-picker')) return;
+    dragging = true; card.classList.add('dragging');
+    startX = e.clientX; startY = e.clientY;
+    origX = parseFloat(card.style.left); origY = parseFloat(card.style.top);
+    e.preventDefault(); e.stopPropagation();
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const nx = origX + (e.clientX - startX) / state.zoom;
+    const ny = origY + (e.clientY - startY) / state.zoom;
+    card.style.left = nx + 'px'; card.style.top = ny + 'px';
+    const t = SCHEMA.tables.find(x => x.id === card.dataset.id);
+    if (t) { t.x = nx; t.y = ny; }
+    updateRelations(); updateMinimap();
+  });
+  document.addEventListener('mouseup', () => {
+    if (dragging) { dragging = false; card.classList.remove('dragging'); saveSchema(); }
+  });
+}
+
+function getAnchorFromBox(box, side) {
+  if (side === 'left')   return { x: box.x,             y: box.y + box.h / 2 };
+  if (side === 'right')  return { x: box.x + box.w,     y: box.y + box.h / 2 };
+  if (side === 'top')    return { x: box.x + box.w / 2, y: box.y };
+  if (side === 'bottom') return { x: box.x + box.w / 2, y: box.y + box.h };
+}
+
+function chooseSides(from, to) {
+  const dx = (to.x + to.w / 2) - (from.x + from.w / 2);
+  const dy = (to.y + to.h / 2) - (from.y + from.h / 2);
+  return Math.abs(dx) > Math.abs(dy)
+    ? [dx > 0 ? 'right' : 'left', dx > 0 ? 'left' : 'right']
+    : [dy > 0 ? 'bottom' : 'top', dy > 0 ? 'top' : 'bottom'];
+}
+
+function makeBezier(a, b, sideA, sideB) {
+  const off = Math.min(180, Math.max(60, Math.hypot(b.x - a.x, b.y - a.y) * 0.4));
+  const ctrl = (p, side, amt) => ({
+    left: { x: p.x - amt, y: p.y }, right: { x: p.x + amt, y: p.y },
+    top: { x: p.x, y: p.y - amt }, bottom: { x: p.x, y: p.y + amt }
+  }[side]);
+  const c1 = ctrl(a, sideA, off), c2 = ctrl(b, sideB, off);
+  return `M ${a.x} ${a.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${b.x} ${b.y}`;
+}
+
+function updateRelations() {
+  svg.innerHTML = '';
+  const tables = {};
+  document.querySelectorAll('.table-card').forEach(el => {
+    tables[el.dataset.id] = { x: parseFloat(el.style.left), y: parseFloat(el.style.top), w: el.offsetWidth, h: el.offsetHeight };
+  });
+  buildRelations().forEach(rel => {
+    const fromT = tables[rel.from], toT = tables[rel.to];
+    if (!fromT || !toT) return;
+    const [sideF, sideT] = chooseSides(fromT, toT);
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', makeBezier(getAnchorFromBox(fromT, sideF), getAnchorFromBox(toT, sideT), sideF, sideT));
+    p.setAttribute('class', 'relation-path');
+    p.dataset.from = rel.from; p.dataset.to = rel.to; p.dataset.fromCol = rel.fromCol;
+    svg.appendChild(p);
+  });
+}
+
+function highlightTable(id) {
+  const related = new Set([id]);
+  buildRelations().forEach(r => { if (r.from === id) related.add(r.to); if (r.to === id) related.add(r.from); });
+  document.querySelectorAll('.table-card').forEach(el => {
+    el.classList.toggle('dim', !related.has(el.dataset.id));
+    if (el.dataset.id === id) el.classList.add('highlighted');
+  });
+  document.querySelectorAll('.relation-path').forEach(p => {
+    const active = p.dataset.from === id || p.dataset.to === id;
+    p.classList.toggle('highlight', active);
+    p.classList.toggle('dim', !active);
+  });
+}
+
+function clearHighlight() {
+  document.querySelectorAll('.table-card').forEach(el => el.classList.remove('dim', 'highlighted'));
+  document.querySelectorAll('.relation-path').forEach(p => p.classList.remove('highlight', 'dim'));
+}
+
+function applyTransform() {
+  canvas.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+  document.getElementById('zoom-level').textContent = Math.round(state.zoom * 100) + '%';
+  updateMinimap();
+}
+
+/* PAN */
+let panning = false, panStart = null;
+canvasWrap.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.table-card') || e.target.closest('.details-panel')) return;
+  panning = true; canvasWrap.classList.add('panning');
+  panStart = { x: e.clientX - state.panX, y: e.clientY - state.panY };
+});
+document.addEventListener('mousemove', (e) => {
+  if (!panning) return;
+  state.panX = e.clientX - panStart.x; state.panY = e.clientY - panStart.y;
+  applyTransform();
+});
+document.addEventListener('mouseup', () => { panning = false; canvasWrap.classList.remove('panning'); });
+
+canvasWrap.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const rect = canvasWrap.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const newZoom = Math.min(2.5, Math.max(0.15, state.zoom * (1 + (-e.deltaY * 0.0015))));
+  state.panX = mx - (mx - state.panX) * (newZoom / state.zoom);
+  state.panY = my - (my - state.panY) * (newZoom / state.zoom);
+  state.zoom = newZoom;
+  applyTransform();
+}, { passive: false });
+
+document.getElementById('zoom-in').addEventListener('click', () => { state.zoom = Math.min(2.5, state.zoom * 1.2); applyTransform(); });
+document.getElementById('zoom-out').addEventListener('click', () => { state.zoom = Math.max(0.15, state.zoom / 1.2); applyTransform(); });
+
+function fitToView() {
+  if (SCHEMA.tables.length === 0) { state.zoom = 1; state.panX = canvasWrap.clientWidth / 2; state.panY = canvasWrap.clientHeight / 2; applyTransform(); return; }
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  document.querySelectorAll('.table-card').forEach(el => {
+    const x = parseFloat(el.style.left), y = parseFloat(el.style.top);
+    minX = Math.min(minX, x); minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + el.offsetWidth); maxY = Math.max(maxY, y + el.offsetHeight);
+  });
+  const w = maxX - minX, h = maxY - minY;
+  const z = Math.min(canvasWrap.clientWidth / (w + 200), canvasWrap.clientHeight / (h + 200), 1);
+  state.zoom = z;
+  state.panX = (canvasWrap.clientWidth - w * z) / 2 - minX * z;
+  state.panY = (canvasWrap.clientHeight - h * z) / 2 - minY * z;
+  applyTransform();
+}
+document.getElementById('btn-fit').addEventListener('click', fitToView);
+
+/* ============================================================
+   DETAILS
+   ============================================================ */
+const detailsPanel = document.getElementById('details-panel');
+function showDetails(id) {
+  const t = SCHEMA.tables.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('details-title').textContent = id;
+  document.getElementById('details-meta').innerHTML = `
+    <div>Módulo: <strong style="color:var(--text-1)">${t.module}</strong></div>
+    <div>Columnas: <strong style="color:var(--text-1)">${t.columns.length}</strong> · PK: <strong style="color:var(--text-1)">${t.columns.filter(c=>c.pk).length}</strong> · FK: <strong style="color:var(--text-1)">${t.columns.filter(c=>c.fk).length}</strong></div>
+  `;
+  const rels = buildRelations();
+  const out = rels.filter(r => r.from === id), inc = rels.filter(r => r.to === id);
+  document.getElementById('details-relations').innerHTML = `
+    ${out.length ? '<div style="margin-bottom:8px;"><span style="color:var(--text-3);font-size:10px;">→ APUNTA A</span>' + out.map(r => `<div class="rel-item" data-target="${r.to}">${r.fromCol} → ${r.to}</div>`).join('') + '</div>' : ''}
+    ${inc.length ? '<div><span style="color:var(--text-3);font-size:10px;">← REFERENCIADA POR</span>' + inc.map(r => `<div class="rel-item" data-target="${r.from}">${r.from}.${r.fromCol}</div>`).join('') + '</div>' : ''}
+    ${(!out.length && !inc.length) ? '<div style="color:var(--text-3);font-size:11px;">Sin relaciones</div>' : ''}
+  `;
+  document.querySelectorAll('#details-relations .rel-item').forEach(el => {
+    el.addEventListener('click', () => { centerOnTable(el.dataset.target); showDetails(el.dataset.target); });
+  });
+  detailsPanel.classList.add('visible');
+}
+document.getElementById('details-close').addEventListener('click', () => detailsPanel.classList.remove('visible'));
+
+function centerOnTable(id) {
+  const el = document.querySelector(`.table-card[data-id="${id}"]`);
+  if (!el) return;
+  state.panX = canvasWrap.clientWidth / 2 - (parseFloat(el.style.left) + el.offsetWidth / 2) * state.zoom;
+  state.panY = canvasWrap.clientHeight / 2 - (parseFloat(el.style.top) + el.offsetHeight / 2) * state.zoom;
+  applyTransform();
+  el.classList.add('highlighted');
+  setTimeout(() => el.classList.remove('highlighted'), 1500);
+}
+
+/* ============================================================
+   EDIT MODE
+   ============================================================ */
+document.getElementById('btn-edit').addEventListener('click', toggleEdit);
+function toggleEdit() {
+  state.editMode = !state.editMode;
+  document.body.classList.toggle('editing', state.editMode);
+  document.getElementById('btn-edit').classList.toggle('active', state.editMode);
+  setTimeout(updateRelations, 250);
+  toast(state.editMode ? 'Modo edición activo' : 'Modo edición desactivado');
+}
+
+document.getElementById('btn-add-table').addEventListener('click', () => {
+  addTable();
+  if (!state.editMode) toggleEdit();
+});
+
+/* ============================================================
+   RESET
+   ============================================================ */
+document.getElementById('btn-reset').addEventListener('click', () => {
+  showConfirm('Restablecer al esquema original', 'Se descartarán todos los cambios y se restaurará el esquema inicial.', () => {
+    SCHEMA = deepClone(INITIAL_SCHEMA);
+    renderAll(); saveSchema(); fitToView();
+    toast('Esquema restablecido');
+  }, 'Restablecer');
+});
+
+/* ============================================================
+   EXPORT / IMPORT JSON
+   ============================================================ */
+document.getElementById('btn-export').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), version: 2, tables: SCHEMA.tables, relations: buildRelations() }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'diagrama_er_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Diagrama exportado a JSON');
+});
+
+document.getElementById('btn-import').addEventListener('click', () => document.getElementById('import-file').click());
+document.getElementById('import-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data || !Array.isArray(data.tables)) { toast('Archivo inválido'); return; }
+      showConfirm('Importar diagrama', `El archivo contiene ${data.tables.length} tablas. Esto reemplazará el diagrama actual.`, () => {
+        SCHEMA = { tables: data.tables.map(t => ({ id: String(t.id || 'sin_nombre'), module: t.module || 'custom', x: t.x ?? 100, y: t.y ?? 100, columns: Array.isArray(t.columns) ? t.columns.map(c => ({ name: String(c.name || 'col'), type: String(c.type || 'varchar(100)'), ...(c.pk ? {pk:true} : {}), ...(c.fk ? {fk:String(c.fk)} : {}) })) : [{name:'id',type:'uuid',pk:true}] })) };
+        renderAll(); saveSchema(); fitToView();
+        toast(`Importado: ${SCHEMA.tables.length} tablas`);
+      }, 'Importar');
+    } catch { toast('Error al leer el archivo JSON'); }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+/* ============================================================
+   SQL
+   ============================================================ */
+document.getElementById('btn-sql').addEventListener('click', async () => {
+  if (!currentDiagramId) { toast('Selecciona un diagrama primero'); return; }
+  try {
+    const data = await apiFetch(`/api/diagrams/${currentDiagramId}/sql/`);
+    document.getElementById('sql-output').textContent = data.sql;
+    document.getElementById('sql-modal').classList.add('visible');
+  } catch { toast('Error al generar SQL'); }
+});
+document.getElementById('sql-close').addEventListener('click', () => document.getElementById('sql-modal').classList.remove('visible'));
+document.getElementById('sql-copy').addEventListener('click', () => {
+  const text = document.getElementById('sql-output').textContent;
+  navigator.clipboard.writeText(text).then(() => toast('SQL copiado al portapapeles'));
+});
+document.getElementById('sql-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'sql-modal') document.getElementById('sql-modal').classList.remove('visible');
+});
+
+/* ============================================================
+   DIAGRAM MANAGEMENT
+   ============================================================ */
+document.getElementById('diagram-select').addEventListener('change', async (e) => {
+  const id = parseInt(e.target.value);
+  if (id) await loadDiagram(id);
+});
+
+document.getElementById('btn-new-diagram').addEventListener('click', () => {
+  document.getElementById('new-diagram-name').value = '';
+  document.getElementById('new-diagram-modal').classList.add('visible');
+  setTimeout(() => document.getElementById('new-diagram-name').focus(), 100);
+});
+
+document.getElementById('new-diagram-cancel').addEventListener('click', () => {
+  document.getElementById('new-diagram-modal').classList.remove('visible');
+});
+
+document.getElementById('new-diagram-ok').addEventListener('click', createNewDiagram);
+document.getElementById('new-diagram-name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') createNewDiagram();
+  if (e.key === 'Escape') document.getElementById('new-diagram-modal').classList.remove('visible');
+});
+
+async function createNewDiagram() {
+  const name = document.getElementById('new-diagram-name').value.trim();
+  if (!name) { toast('Ingresa un nombre para el diagrama'); return; }
+  document.getElementById('new-diagram-modal').classList.remove('visible');
+  try {
+    const data = await apiFetch('/api/diagrams/', {
+      method: 'POST',
+      body: JSON.stringify({ name, schema: deepClone(INITIAL_SCHEMA) }),
+    });
+    await loadDiagramList();
+    await loadDiagram(data.id);
+    toast(`Diagrama "${name}" creado`);
+  } catch { toast('Error al crear el diagrama'); }
+}
+
+document.getElementById('btn-delete-diagram').addEventListener('click', () => {
+  if (!currentDiagramId) return;
+  const sel = document.getElementById('diagram-select');
+  const name = sel.options[sel.selectedIndex]?.text || 'este diagrama';
+  showConfirm(`Eliminar "${name}"`, 'Esta acción no se puede deshacer.', async () => {
+    try {
+      await apiFetch(`/api/diagrams/${currentDiagramId}/`, { method: 'DELETE' });
+      currentDiagramId = null;
+      SCHEMA = { tables: [] };
+      await loadDiagramList();
+      if (diagramList.length > 0) {
+        await loadDiagram(diagramList[0].id);
+      } else {
+        renderAll();
+        toast('Diagrama eliminado');
+      }
+    } catch { toast('Error al eliminar el diagrama'); }
+  });
+});
+
+/* ============================================================
+   SEARCH
+   ============================================================ */
+document.getElementById('search').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase().trim();
+  if (!q) { clearHighlight(); return; }
+  const matches = new Set();
+  SCHEMA.tables.forEach(t => {
+    if (t.id.toLowerCase().includes(q)) matches.add(t.id);
+    t.columns.forEach(c => { if (c.name.toLowerCase().includes(q)) matches.add(t.id); });
+  });
+  document.querySelectorAll('.table-card').forEach(el => {
+    el.classList.toggle('highlighted', matches.has(el.dataset.id));
+    el.classList.toggle('dim', !matches.has(el.dataset.id));
+  });
+  document.querySelectorAll('.relation-path').forEach(p => {
+    p.classList.toggle('dim', !(matches.has(p.dataset.from) && matches.has(p.dataset.to)));
+  });
+});
+
+/* ============================================================
+   MINIMAP / STATS
+   ============================================================ */
+function updateMinimap() {
+  const content = document.getElementById('minimap-content');
+  content.innerHTML = '';
+  if (SCHEMA.tables.length === 0) return;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  document.querySelectorAll('.table-card').forEach(el => {
+    const x = parseFloat(el.style.left), y = parseFloat(el.style.top);
+    minX = Math.min(minX, x); minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + el.offsetWidth); maxY = Math.max(maxY, y + el.offsetHeight);
+  });
+  const w = maxX - minX || 1, h = maxY - minY || 1;
+  const scale = Math.min(200 / w, 130 / h);
+  document.querySelectorAll('.table-card').forEach(el => {
+    const dot = document.createElement('div');
+    dot.className = 'minimap-dot ' + el.dataset.module;
+    dot.style.left = ((parseFloat(el.style.left) - minX) * scale) + 'px';
+    dot.style.top = ((parseFloat(el.style.top) - minY) * scale) + 'px';
+    dot.style.width = Math.max(2, el.offsetWidth * scale) + 'px';
+    dot.style.height = Math.max(2, el.offsetHeight * scale) + 'px';
+    content.appendChild(dot);
+  });
+  const vp = document.getElementById('minimap-viewport');
+  vp.style.left = Math.max(0, (-state.panX / state.zoom - minX) * scale) + 'px';
+  vp.style.top = Math.max(0, (-state.panY / state.zoom - minY) * scale) + 'px';
+  vp.style.width = Math.min(200, (canvasWrap.clientWidth / state.zoom) * scale) + 'px';
+  vp.style.height = Math.min(130, (canvasWrap.clientHeight / state.zoom) * scale) + 'px';
+}
+
+function updateStats() {
+  document.getElementById('stat-tables').textContent = SCHEMA.tables.length;
+  document.getElementById('stat-relations').textContent = buildRelations().length;
+  document.getElementById('stat-columns').textContent = SCHEMA.tables.reduce((s, t) => s + t.columns.length, 0);
+}
+
+/* ============================================================
+   CONFIRM
+   ============================================================ */
+let confirmCallback = null;
+function showConfirm(title, body, onOk, okText) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-body').textContent = body;
+  document.getElementById('confirm-ok').textContent = okText || 'Eliminar';
+  document.getElementById('confirm-modal').classList.add('visible');
+  confirmCallback = onOk;
+}
+document.getElementById('confirm-ok').addEventListener('click', () => {
+  document.getElementById('confirm-modal').classList.remove('visible');
+  if (confirmCallback) confirmCallback();
+  confirmCallback = null;
+});
+document.getElementById('confirm-cancel').addEventListener('click', () => {
+  document.getElementById('confirm-modal').classList.remove('visible');
+  confirmCallback = null;
+});
+document.getElementById('confirm-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'confirm-modal') { document.getElementById('confirm-modal').classList.remove('visible'); confirmCallback = null; }
+});
+
+/* ============================================================
+   TOAST / UTILS
+   ============================================================ */
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============================================================
+   KEYBOARD
+   ============================================================ */
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.menu-popup') && !e.target.closest('.table-menu-btn'))
+    document.querySelectorAll('.menu-popup.visible').forEach(p => p.classList.remove('visible'));
+  if (!e.target.closest('.module-picker') && !e.target.closest('.module-tag'))
+    document.querySelectorAll('.module-picker.visible').forEach(p => p.classList.remove('visible'));
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.matches('input, select, textarea')) { if (e.key === 'Escape') e.target.blur(); return; }
+  if (e.key === 'Escape') {
+    detailsPanel.classList.remove('visible');
+    document.getElementById('search').value = '';
+    clearHighlight();
+    document.getElementById('confirm-modal').classList.remove('visible');
+    document.getElementById('sql-modal').classList.remove('visible');
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'e') { e.preventDefault(); toggleEdit(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); addTable(); if (!state.editMode) toggleEdit(); }
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+async function init() {
+  const list = await loadDiagramList();
+  if (list.length > 0) {
+    await loadDiagram(list[0].id);
+  } else {
+    renderAll();
+    toast('Bienvenido · Crea tu primer diagrama con el botón "Nuevo"');
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>
